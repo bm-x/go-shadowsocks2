@@ -10,7 +10,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/riobard/go-shadowsocks2/core"
+	"fmt"
+	"github.com/bm-x/go-shadowsocks2/core"
 )
 
 var config struct {
@@ -23,6 +24,114 @@ func logf(f string, v ...interface{}) {
 		log.Printf(f, v...)
 	}
 }
+
+// -c ss://aes-128-cfb:m@47.52.65.242:666 -socks :1080
+//func Ss(c string, socks string) {
+//
+//	var flags struct {
+//		Client    SpaceSeparatedList
+//		Server    SpaceSeparatedList
+//		TCPTun    PairList
+//		UDPTun    PairList
+//		Socks     string
+//		RedirTCP  string
+//		RedirTCP6 string
+//		TproxyTCP string
+//	}
+//
+//	flags.Client = []string{c}
+//	flags.Socks = socks
+//
+//	//listCiphers := flag.Bool("cipher", false, "List supported ciphers")
+//	//flag.BoolVar(&config.Verbose, "verbose", false, "verbose mode")
+//	//flag.Var(&flags.Server, "s", "server listen url")
+//	//flag.Var(&flags.Client, "c", "client connect url")
+//	//flag.Var(&flags.TCPTun, "tcptun", "(client-only) TCP tunnel (laddr1=raddr1,laddr2=raddr2,...)")
+//	//flag.Var(&flags.UDPTun, "udptun", "(client-only) UDP tunnel (laddr1=raddr1,laddr2=raddr2,...)")
+//	//flag.StringVar(&flags.Socks, "socks", "", "(client-only) SOCKS listen address")
+//	//flag.StringVar(&flags.RedirTCP, "redir", "", "(client-only) redirect TCP from this address")
+//	//flag.StringVar(&flags.RedirTCP6, "redir6", "", "(client-only) redirect TCP IPv6 from this address")
+//	//flag.StringVar(&flags.TproxyTCP, "tproxytcp", "", "(client-only) TPROXY TCP listen address")
+//	//flag.DurationVar(&config.UDPTimeout, "udptimeout", 120*time.Second, "UDP tunnel timeout")
+//	//flag.Parse()
+//
+//	//if *listCiphers {
+//	//	println(strings.Join(core.ListCipher(), " "))
+//	//	return
+//	//}
+//
+//	if len(flags.Client) == 0 && len(flags.Server) == 0 {
+//		flag.Usage()
+//		return
+//	}
+//
+//	if len(flags.Client) > 0 { // client mode
+//		if len(flags.UDPTun) > 0 { // use first server for UDP
+//			addr, cipher, password, err := parseURL(flags.Client[0])
+//			if err != nil {
+//				log.Fatal(err)
+//			}
+//
+//			ciph, err := core.PickCipher(cipher, nil, password)
+//			if err != nil {
+//				log.Fatal(err)
+//			}
+//			for _, p := range flags.UDPTun {
+//				go udpLocal(p[0], addr, p[1], ciph.PacketConn)
+//			}
+//		}
+//
+//		fmt.Print("flags.Client ", flags.Client, "\n")
+//
+//		d, err := fastdialer(flags.Client...)
+//		if err != nil {
+//			log.Fatalf("failed to create dialer: %v", err)
+//		}
+//
+//		if len(flags.TCPTun) > 0 {
+//			for _, p := range flags.TCPTun {
+//				go tcpTun(p[0], p[1], d)
+//			}
+//		}
+//
+//		if flags.Socks != "" {
+//			go socksLocal(flags.Socks, d)
+//		}
+//
+//		if flags.RedirTCP != "" {
+//			go redirLocal(flags.RedirTCP, d)
+//		}
+//
+//		if flags.RedirTCP6 != "" {
+//			go redir6Local(flags.RedirTCP6, d)
+//		}
+//
+//		if flags.TproxyTCP != "" {
+//			go tproxyTCP(flags.TproxyTCP, d)
+//		}
+//	}
+//
+//	if len(flags.Server) > 0 { // server mode
+//		for _, each := range flags.Server {
+//			addr, cipher, password, err := parseURL(each)
+//			if err != nil {
+//				log.Fatal(err)
+//			}
+//
+//			ciph, err := core.PickCipher(cipher, nil, password)
+//			if err != nil {
+//				log.Fatal(err)
+//			}
+//
+//			go udpRemote(addr, ciph.PacketConn)
+//			go tcpRemote(addr, ciph.StreamConn)
+//		}
+//	}
+//
+//	sigCh := make(chan os.Signal, 1)
+//	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+//	<-sigCh
+//}
 
 func main() {
 
@@ -75,6 +184,8 @@ func main() {
 				go udpLocal(p[0], addr, p[1], ciph.PacketConn)
 			}
 		}
+
+		fmt.Print("flags.Client ", flags.Client, "\n")
 
 		d, err := fastdialer(flags.Client...)
 		if err != nil {

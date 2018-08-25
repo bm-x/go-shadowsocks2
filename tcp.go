@@ -6,7 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/riobard/go-shadowsocks2/socks"
+	"fmt"
+	"github.com/bm-x/go-shadowsocks2/socks"
 )
 
 func tcpKeepAlive(c net.Conn) {
@@ -35,6 +36,7 @@ func tcpTun(addr, target string, d Dialer) {
 
 // Listen on addr and proxy to server to reach target from getAddr.
 func tcpLocal(addr string, d Dialer, getAddr func(net.Conn) (socks.Addr, error)) {
+	fmt.Print("tcpLocal addr : ", addr, "\n")
 	l, err := net.Listen("tcp", addr)
 	if err != nil {
 		logf("failed to listen on %s: %v", addr, err)
@@ -43,7 +45,9 @@ func tcpLocal(addr string, d Dialer, getAddr func(net.Conn) (socks.Addr, error))
 
 	for {
 		c, err := l.Accept()
+		fmt.Println("accepted new client")
 		if err != nil {
+			fmt.Println("failed to accept: %s", err)
 			logf("failed to accept: %s", err)
 			continue
 		}
@@ -59,6 +63,8 @@ func tcpLocal(addr string, d Dialer, getAddr func(net.Conn) (socks.Addr, error))
 			}
 
 			rc, err := d.Dial("tcp", tgt.String())
+			fmt.Print("connect addr ", tgt.String(), "  ", &rc, "\n")
+
 			if err != nil {
 				logf("failed to connect: %v", err)
 				return
@@ -66,7 +72,8 @@ func tcpLocal(addr string, d Dialer, getAddr func(net.Conn) (socks.Addr, error))
 			defer rc.Close()
 			tcpKeepAlive(rc)
 
-			logf("proxy %s <--[%s]--> %s", c.RemoteAddr(), rc.RemoteAddr(), tgt)
+			//fmt.Printf("proxy %s <--[%s]--> %s\n", c.RemoteAddr(), rc.RemoteAddr(), tgt)
+			//logf("proxy %s <--[%s]--> %s", c.RemoteAddr(), rc.RemoteAddr(), tgt)
 			if err = relay(rc, c); err != nil {
 				if err, ok := err.(net.Error); ok && err.Timeout() {
 					return // ignore i/o timeout
@@ -123,6 +130,7 @@ func tcpRemote(addr string, shadow func(net.Conn) net.Conn) {
 	}
 }
 
+// left:remount  right:local
 // relay copies between left and right bidirectionally. Returns any error occurred.
 func relay(left, right net.Conn) error {
 	var err, err1 error

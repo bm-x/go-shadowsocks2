@@ -12,7 +12,7 @@ deploy:
   file_glob: true
   file: bin/*
   on:
-    repo: riobard/go-shadowsocks2
+    repo: bm-x/go-shadowsocks2
     branch: master
     tags: true
   api_key:
